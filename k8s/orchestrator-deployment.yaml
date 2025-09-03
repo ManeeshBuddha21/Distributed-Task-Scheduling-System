@@ -1,0 +1,41 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orchestrator
+  namespace: dts
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: orchestrator }
+  template:
+    metadata:
+      labels: { app: orchestrator }
+    spec:
+      containers:
+        - name: orchestrator
+          image: ghcr.io/example/dts-orchestrator:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: ORCH_DB_URL
+              value: "postgresql+psycopg2://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres:5432/$(POSTGRES_DB)"
+            - name: ORCH_PORT
+              valueFrom: { configMapKeyRef: { name: dts-config, key: ORCH_PORT } }
+            - name: TASK_HEARTBEAT_TTL_SECONDS
+              valueFrom: { configMapKeyRef: { name: dts-config, key: TASK_HEARTBEAT_TTL_SECONDS } }
+          envFrom:
+            - secretRef: { name: dts-secrets }
+          ports:
+            - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orchestrator
+  namespace: dts
+spec:
+  selector: { app: orchestrator }
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http

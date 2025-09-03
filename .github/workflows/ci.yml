@@ -1,0 +1,46 @@
+
+name: ci
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: scheduler
+          POSTGRES_PASSWORD: changeme
+          POSTGRES_DB: schedulerdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Init DB schema
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          psql postgresql://scheduler:changeme@localhost:5432/schedulerdb -f db/migrations.sql
+
+      - name: Python - orchestrator tests
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: |
+          pip install -r orchestrator/requirements.txt
+          ORCH_DB_URL=postgresql+psycopg2://scheduler:changeme@localhost:5432/schedulerdb pytest -q orchestrator/app/tests
+
+      - name: Java - scheduler build & tests
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - run: |
+          mvn -q -f scheduler/pom.xml -DskipTests=false test package

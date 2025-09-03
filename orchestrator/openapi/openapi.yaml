@@ -1,0 +1,30 @@
+
+openapi: 3.0.2
+info:
+  title: Distributed Task Scheduler Orchestrator
+  version: "1.0.0"
+paths:
+  /api/v1/jobs:
+    post:
+      summary: Create job with tasks
+      requestBody:
+        required: true
+      responses:
+        '200':
+          description: OK
+  /api/v1/tasks:
+    get:
+      summary: List tasks
+      responses: { '200': { description: OK } }
+  /api/v1/tasks/next:
+    post:
+      summary: Claim next queued task
+      responses: { '200': { description: OK }, '404': { description: none } }
+  /api/v1/tasks/{task_id}/complete:
+    post:
+      summary: Mark task complete
+      responses: { '200': { description: OK } }
+  /api/v1/tasks/{task_id}/fail:
+    post:
+      summary: Mark task failed
+      responses: { '200': { description: OK } }

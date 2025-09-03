@@ -1,0 +1,11 @@
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dts-config
+  namespace: dts
+data:
+  ORCH_PORT: "8080"
+  TASK_HEARTBEAT_TTL_SECONDS: "60"
+  SCHEDULER_BATCH_SIZE: "100"
+  SCHEDULER_LOOP_DELAY_MS: "1000"

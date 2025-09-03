@@ -1,0 +1,42 @@
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: dts
+spec:
+  selector:
+    matchLabels: { app: postgres }
+  serviceName: postgres
+  replicas: 1
+  template:
+    metadata:
+      labels: { app: postgres }
+    spec:
+      containers:
+        - name: pg
+          image: postgres:15
+          envFrom:
+            - secretRef: { name: dts-secrets }
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: pgdata
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: pgdata
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests: { storage: 5Gi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: dts
+spec:
+  selector: { app: postgres }
+  ports:
+    - port: 5432

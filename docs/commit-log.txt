@@ -1,0 +1,10 @@
+
+feat(orchestrator): first cut of FastAPI service with jobs/tasks
+feat(db): migrations + seed + indices
+feat(scheduler): Java prioritizer + queue loop + backoff
+feat(worker): simple C++ libcurl-based worker that runs shell cmds
+chore(ci): GitHub Actions for Python + Java
+docs: add README with run instructions, architecture notes
+refactor(orchestrator): split crud, api, background
+fix(worker): naive JSON parsing for cmd field
+test(orchestrator): smoke test job flow

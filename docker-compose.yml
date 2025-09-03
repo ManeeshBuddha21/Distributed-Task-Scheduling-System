@@ -1,0 +1,53 @@
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-scheduler}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-schedulerdb}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/migrations.sql:/docker-entrypoint-initdb.d/001_migrations.sql:ro
+      - ./db/seed.sql:/docker-entrypoint-initdb.d/002_seed.sql:ro
+
+  orchestrator:
+    build:
+      context: ./orchestrator
+      dockerfile: ../docker/orchestrator.Dockerfile
+    environment:
+      ORCH_DB_URL: ${ORCH_DB_URL}
+      ORCH_PORT: ${ORCH_PORT:-8080}
+      TASK_HEARTBEAT_TTL_SECONDS: ${TASK_HEARTBEAT_TTL_SECONDS:-60}
+    ports:
+      - "${ORCH_PORT:-8080}:8080"
+    depends_on:
+      - postgres
+
+  scheduler:
+    build:
+      context: ./scheduler
+      dockerfile: ../docker/scheduler.Dockerfile
+    environment:
+      SCHEDULER_DB_URL: ${SCHEDULER_DB_URL}
+      SCHEDULER_DB_USER: ${SCHEDULER_DB_USER}
+      SCHEDULER_DB_PASSWORD: ${SCHEDULER_DB_PASSWORD}
+      SCHEDULER_BATCH_SIZE: ${SCHEDULER_BATCH_SIZE:-100}
+      SCHEDULER_LOOP_DELAY_MS: ${SCHEDULER_LOOP_DELAY_MS:-1000}
+    depends_on:
+      - postgres
+
+  worker:
+    build:
+      context: ./worker
+      dockerfile: ../docker/worker.Dockerfile
+    environment:
+      ORCHESTRATOR_URL: ${ORCHESTRATOR_URL:-http://orchestrator:8080}
+      WORKER_ID: ${WORKER_ID:-worker-1}
+    depends_on:
+      - orchestrator
+
+volumes:
+  pgdata:
